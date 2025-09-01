@@ -8,12 +8,24 @@ class ChatBot {
         this.webhookUrl = 'https://n8n.srv871883.hstgr.cloud/webhook-test/leaozinho';
         this.isTyping = false;
         
+        // Passo 1: Inicializar a propriedade do ID da sessão
+        this.sessionId = null;
+        
         this.init();
     }
 
     init() {
+        // Passo 2: Gerar o ID único assim que o chat for inicializado
+        this.generateSessionId();
+        
         this.setupEventListeners();
         this.displayWelcomeMessage();
+    }
+
+    // Nova função para gerar e armazenar o ID da sessão
+    generateSessionId() {
+        this.sessionId = crypto.randomUUID();
+        console.log('Chat session started with ID:', this.sessionId); // Ótimo para depuração
     }
 
     setupEventListeners() {
@@ -88,8 +100,10 @@ class ChatBot {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                // Passo 3: Adicionar o sessionId ao corpo da requisição
                 body: JSON.stringify({
-                    question: message
+                    question: message,
+                    sessionId: this.sessionId 
                 })
             });
 
@@ -171,4 +185,4 @@ class ChatBot {
 // Inicializar o chatbot quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     new ChatBot();
-}); 
+});
