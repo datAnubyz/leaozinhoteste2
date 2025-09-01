@@ -4,86 +4,35 @@ class ChatBot {
         this.sendButton = document.getElementById('sendButton');
         this.chatMessages = document.getElementById('chatMessages');
         this.typingIndicator = document.getElementById('typingIndicator');
-        // Novo elemento: Botão do microfone
-        this.micButton = document.getElementById('micButton');
         
         this.webhookUrl = 'https://n8n.srv871883.hstgr.cloud/webhook-test/leaozinho';
         this.isTyping = false;
         
+        // Passo 1: Inicializar a propriedade do ID da sessão
         this.sessionId = null;
-
-        // Propriedades para o Reconhecimento de Voz
-        this.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.recognition = null;
         
         this.init();
     }
 
     init() {
+        // Passo 2: Gerar o ID único assim que o chat for inicializado
         this.generateSessionId();
+        
         this.setupEventListeners();
-        // Configura o reconhecimento de voz
-        this.setupSpeechRecognition();
         this.displayWelcomeMessage();
     }
-    
+
+    // Nova função para gerar e armazenar o ID da sessão
     generateSessionId() {
         this.sessionId = crypto.randomUUID();
-        console.log('Chat session started with ID:', this.sessionId);
+        console.log('Chat session started with ID:', this.sessionId); // Ótimo para depuração
     }
-
-    // --- LÓGICA DE RECONHECIMENTO DE VOZ ---
-    setupSpeechRecognition() {
-        if (this.SpeechRecognition) {
-            this.recognition = new this.SpeechRecognition();
-            this.recognition.lang = 'pt-BR'; // Define o idioma
-            this.recognition.interimResults = false;
-            this.recognition.maxAlternatives = 1;
-
-            // Evento disparado quando a fala é reconhecida
-            this.recognition.onresult = (event) => {
-                const speechResult = event.results[0][0].transcript;
-                this.messageInput.value = speechResult;
-                // Envia a mensagem automaticamente após o reconhecimento
-                this.sendMessage();
-            };
-
-            // Evento para feedback visual (quando começa a ouvir)
-            this.recognition.onstart = () => {
-                this.micButton.classList.add('recording');
-            };
-
-            // Evento para remover o feedback visual (quando para de ouvir)
-            this.recognition.onend = () => {
-                this.micButton.classList.remove('recording');
-            };
-
-            // Trata erros
-            this.recognition.onerror = (event) => {
-                console.error('Erro no reconhecimento de voz:', event.error);
-                this.micButton.classList.remove('recording');
-            };
-
-        } else {
-            console.warn('Reconhecimento de voz não é suportado neste navegador.');
-            this.micButton.style.display = 'none'; // Esconde o botão se não houver suporte
-        }
-    }
-    
-    startVoiceRecognition() {
-        if (this.recognition && !this.isTyping) {
-            try {
-                this.recognition.start();
-            } catch (error) {
-                console.error('Erro ao iniciar o reconhecimento de voz:', error);
-            }
-        }
-    }
-    // --- FIM DA LÓGICA DE VOZ ---
 
     setupEventListeners() {
+        // Envio por botão
         this.sendButton.addEventListener('click', () => this.sendMessage());
         
+        // Envio por Enter
         this.messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -91,15 +40,11 @@ class ChatBot {
             }
         });
 
+        // Desabilitar botão quando input estiver vazio
         this.messageInput.addEventListener('input', () => {
             const hasText = this.messageInput.value.trim().length > 0;
             this.sendButton.disabled = !hasText || this.isTyping;
         });
-
-        // Adiciona o listener para o botão de microfone
-        if (this.micButton) {
-            this.micButton.addEventListener('click', () => this.startVoiceRecognition());
-        }
     }
 
     displayWelcomeMessage() {
@@ -113,19 +58,25 @@ class ChatBot {
         
         if (!message || this.isTyping) return;
 
+        // Adicionar mensagem do usuário
         this.addUserMessage(message);
         
+        // Limpar input e desabilitar
         this.messageInput.value = '';
         this.sendButton.disabled = true;
         this.isTyping = true;
 
+        // Mostrar indicador de digitação
         this.showTypingIndicator();
 
         try {
+            // Enviar para webhook
             const response = await this.sendToWebhook(message);
             
+            // Esconder indicador de digitação
             this.hideTypingIndicator();
             
+            // Adicionar resposta do bot (instantâneo; animação sutil via CSS)
             if (response && response.reply) {
                 await this.addBotMessage(response.reply);
             } else {
@@ -137,9 +88,7 @@ class ChatBot {
             await this.addBotMessage("🦁 Ops! Parece que houve uma interferência na conexão! O LEÃOZINHO está trabalhando para resolver isso. Verifique sua conexão e vamos tentar novamente! 💪✨");
         } finally {
             this.isTyping = false;
-            // Reavalia o estado do botão de enviar
-            const hasText = this.messageInput.value.trim().length > 0;
-            this.sendButton.disabled = !hasText;
+            this.sendButton.disabled = false;
             this.messageInput.focus();
         }
     }
@@ -151,6 +100,7 @@ class ChatBot {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                // Passo 3: Adicionar o sessionId ao corpo da requisição
                 body: JSON.stringify({
                     question: message,
                     sessionId: this.sessionId 
@@ -161,7 +111,8 @@ class ChatBot {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            return await response.json();
+            const data = await response.json();
+            return data;
         } catch (error) {
             console.error('Erro na requisição para webhook:', error);
             throw error;
@@ -178,6 +129,7 @@ class ChatBot {
         const messageElement = this.createMessageElement('', 'bot');
         const messageContent = messageElement.querySelector('.message-content');
         
+        // Inserir imediatamente o texto (sem digitar caractere por caractere)
         messageContent.textContent = message;
 
         this.chatMessages.appendChild(messageElement);
@@ -201,8 +153,6 @@ class ChatBot {
 
         return messageDiv;
     }
-
-
 
     showTypingIndicator() {
         this.typingIndicator.style.display = 'flex';
