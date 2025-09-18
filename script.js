@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'Leão Gestor',
             icon: '📈',
             welcome: 'Olá! Sou o Leão Gestor. Minha especialidade é performance e estratégia. Como posso otimizar seus resultados hoje?',
-            webhookPath: 'leao-gestor', // NOVO PATH
+            webhookPath: 'leao-gestor',
             theme: {
                 '--primary-color': '#3498db',
                 '--primary-lighter': '#5dade2',
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'Leão Social',
             icon: '📱',
             welcome: 'E aí! Aqui é o Leão Social, pronto pra bombar! Criatividade e engajamento são meu forte. Qual a boa de hoje?',
-            webhookPath: 'leaozinho', // PATH MANTIDO
+            webhookPath: 'leaozinho',
             theme: {
                 '--primary-color': '#e84393',
                 '--primary-lighter': '#fd79a8',
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'Leão Torcedor',
             icon: '⚽',
             welcome: 'Fala, campeão! Eu sou o Leão Torcedor, seu parceiro para as melhores apostas esportivas. Qual o palpite de hoje?',
-            webhookPath: 'leao-torcedor', // NOVO PATH
+            webhookPath: 'leao-torcedor',
             theme: {
                 '--primary-color': '#2ecc71',
                 '--primary-lighter': '#58d68d',
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'Leão Croupier',
             icon: '🃏',
             welcome: 'Bem-vindo à mesa. Eu sou o Leão Croupier, seu mestre no universo do cassino. Façam suas apostas. Como posso servi-lo?',
-            webhookPath: 'leao-croupier', // NOVO PATH
+            webhookPath: 'leao-croupier',
             theme: {
                 '--primary-color': '#e74c3c',
                 '--primary-lighter': '#f1948a',
@@ -172,12 +172,13 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error("Persona atual ou webhookPath não definido.");
         }
 
-        // MONTAGEM DA URL DINÂMICA
+        // Monta a URL correta com base na persona selecionada
         const fullWebhookUrl = webhookBaseUrl + currentPersona.webhookPath;
         console.log(`Enviando para: ${fullWebhookUrl}`); // Log para debug
 
         try {
-            const response = await fetch(fullWebhookUrl, { // URL dinâmica usada aqui
+            // Usa a URL dinâmica que acabamos de montar
+            const response = await fetch(fullWebhookUrl, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
