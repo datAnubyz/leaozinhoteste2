@@ -1,268 +1,174 @@
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- ELEMENTOS DO DOM ---
-    const personaHub = document.getElementById('persona-hub');
-    const chatContainer = document.getElementById('chatContainer');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    const chatMessages = document.getElementById('chatMessages');
-    const typingIndicator = document.getElementById('typingIndicator');
-    const backButton = document.getElementById('backButton');
-    
-    // --- ELEMENTOS DINÂMICOS DO CHAT ---
-    const botAvatar = document.getElementById('botAvatar');
-    const botName = document.getElementById('botName');
-    const typingText = document.getElementById('typingText');
-
-    // --- DADOS DAS PERSONAS (COM WEBHOOK PATHS INDIVIDUAIS) ---
-    const personas = {
-        gestor: {
-            name: 'Leão Gestor',
-            icon: '📈',
-            welcome: 'Olá! Sou o Leão Gestor. Minha especialidade é performance e estratégia. Como posso otimizar seus resultados hoje?',
-            webhookPath: 'leao-gestor',
-            theme: {
-                '--primary-color': '#3498db',
-                '--primary-lighter': '#5dade2',
-                '--primary-shadow': 'rgba(52, 152, 219, 0.3)',
-                '--primary-border': 'rgba(52, 152, 219, 0.2)',
-            }
-        },
-        social: {
-            name: 'Leão Social',
-            icon: '📱',
-            welcome: 'E aí! Aqui é o Leão Social, pronto pra bombar! Criatividade e engajamento são meu forte. Qual a boa de hoje?',
-            webhookPath: 'leaozinho',
-            theme: {
-                '--primary-color': '#e84393',
-                '--primary-lighter': '#fd79a8',
-                '--primary-shadow': 'rgba(232, 67, 147, 0.3)',
-                '--primary-border': 'rgba(232, 67, 147, 0.2)',
-            }
-        },
-        torcedor: {
-            name: 'Leão Torcedor',
-            icon: '⚽',
-            welcome: 'Fala, campeão! Eu sou o Leão Torcedor, seu parceiro para as melhores apostas esportivas. Qual o palpite de hoje?',
-            webhookPath: 'leao-torcedor',
-            theme: {
-                '--primary-color': '#2ecc71',
-                '--primary-lighter': '#58d68d',
-                '--primary-shadow': 'rgba(46, 204, 113, 0.3)',
-                '--primary-border': 'rgba(46, 204, 113, 0.2)',
-            }
-        },
-        croupier: {
-            name: 'Leão Croupier',
-            icon: '🃏',
-            welcome: 'Bem-vindo à mesa. Eu sou o Leão Croupier, seu mestre no universo do cassino. Façam suas apostas. Como posso servi-lo?',
-            webhookPath: 'leao-croupier',
-            theme: {
-                '--primary-color': '#e74c3c',
-                '--primary-lighter': '#f1948a',
-                '--primary-shadow': 'rgba(231, 76, 60, 0.3)',
-                '--primary-border': 'rgba(231, 76, 60, 0.2)',
-            }
-        }
-    };
-    
-    // --- ESTADO DA APLICAÇÃO ---
-    let isTyping = false;
-    let currentPersona = null;
-    let currentSessionId = null; // NOVO: Variável para armazenar o ID da sessão atual
-    const webhookBaseUrl = 'https://n8n.srv871883.hstgr.cloud/webhook-test/';
-
-    // --- FUNÇÕES PRINCIPAIS ---
-
-    /**
-     * Inicializa a tela de seleção de personas
-     */
-    function initHub() {
-        document.querySelectorAll('.persona-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const personaKey = card.dataset.persona;
-                startChat(personaKey);
-            });
-        });
-
-        backButton.addEventListener('click', showHub);
-    }
-    
-    /**
-     * Exibe a tela de seleção e esconde o chat
-     */
-    function showHub() {
-        chatContainer.style.display = 'none';
-        personaHub.style.display = 'block';
-        currentPersona = null;
-        currentSessionId = null; // Limpa o ID da sessão ao voltar para o hub
+class ChatBot {
+    constructor() {
+        this.messageInput = document.getElementById('messageInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.chatMessages = document.getElementById('chatMessages');
+        this.typingIndicator = document.getElementById('typingIndicator');
+        
+        this.webhookUrl = 'https://n8n.srv871883.hstgr.cloud/webhook-test/leaozinho';
+        this.isTyping = false;
+        
+        this.init();
     }
 
-    /**
-     * Inicia o chat com a persona selecionada
-     * @param {string} personaKey - A chave da persona (ex: 'gestor')
-     */
-    function startChat(personaKey) {
-        currentPersona = personas[personaKey];
-        if (!currentPersona) return;
+    init() {
+        this.setupEventListeners();
+        this.displayWelcomeMessage();
+    }
 
-        // NOVO: Gerar um ID de sessão único para esta conversa
-        currentSessionId = crypto.randomUUID();
-        console.log(`Nova sessão iniciada com ID: ${currentSessionId}`);
-
-        // Limpa mensagens antigas
-        chatMessages.innerHTML = '';
+    setupEventListeners() {
+        // Envio por botão
+        this.sendButton.addEventListener('click', () => this.sendMessage());
         
-        // Aplica o tema da persona
-        Object.keys(currentPersona.theme).forEach(key => {
-            chatContainer.style.setProperty(key, currentPersona.theme[key]);
+        // Envio por Enter
+        this.messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
         });
-        
-        // Atualiza a UI do chat
-        botAvatar.textContent = currentPersona.icon;
-        botName.textContent = currentPersona.name;
-        typingText.textContent = `${currentPersona.name} está digitando...`;
-        
-        // Troca de tela
-        personaHub.style.display = 'none';
-        chatContainer.style.display = 'flex';
-        
-        // Exibe mensagem de boas-vindas
+
+        // Desabilitar botão quando input estiver vazio
+        this.messageInput.addEventListener('input', () => {
+            const hasText = this.messageInput.value.trim().length > 0;
+            this.sendButton.disabled = !hasText || this.isTyping;
+        });
+    }
+
+    displayWelcomeMessage() {
         setTimeout(() => {
-            addBotMessage(currentPersona.welcome);
-            messageInput.focus();
+            this.addBotMessage("🦁 VIVA A MAGIA DE VEGAS! 🎰\n\nOlá! Sou o LEÃOZINHO, seu assistente virtual de elite! ✨\n\nEstou aqui para transformar sua experiência em algo EXTRAORDINÁRIO! Como posso te ajudar hoje? 🌟");
         }, 500);
     }
 
-    /**
-     * Envia a mensagem do usuário
-     */
-    async function sendMessage() {
-        const message = messageInput.value.trim();
-        if (!message || isTyping) return;
-
-        addUserMessage(message);
+    async sendMessage() {
+        const message = this.messageInput.value.trim();
         
-        messageInput.value = '';
-        sendButton.disabled = true;
-        isTyping = true;
+        if (!message || this.isTyping) return;
 
-        showTypingIndicator();
+        // Adicionar mensagem do usuário
+        this.addUserMessage(message);
+        
+        // Limpar input e desabilitar
+        this.messageInput.value = '';
+        this.sendButton.disabled = true;
+        this.isTyping = true;
+
+        // Mostrar indicador de digitação
+        this.showTypingIndicator();
 
         try {
-            const response = await sendToWebhook(message);
+            // Enviar para webhook
+            const response = await this.sendToWebhook(message);
             
+            // Esconder indicador de digitação
+            this.hideTypingIndicator();
+            
+            // Adicionar resposta do bot (instantâneo; animação sutil via CSS)
             if (response && response.reply) {
-                await addBotMessage(response.reply);
+                await this.addBotMessage(response.reply);
             } else {
-                await addBotMessage("Hmm... Algo deu errado. Mas não se preocupe, acontece nas melhores mesas! Tente novamente. ✨");
+                await this.addBotMessage("🦁 Hmm... Algo deu errado na transmissão! Mas o LEÃOZINHO nunca desiste! Tente novamente e vamos fazer a MÁGICA acontecer! ✨");
             }
         } catch (error) {
             console.error('Erro ao enviar mensagem:', error);
-            await addBotMessage("Ops! A conexão falhou. Verifique a rede e vamos tentar de novo! 💪");
+            this.hideTypingIndicator();
+            await this.addBotMessage("🦁 Ops! Parece que houve uma interferência na conexão! O LEÃOZINHO está trabalhando para resolver isso. Verifique sua conexão e vamos tentar novamente! 💪✨");
         } finally {
-            hideTypingIndicator();
-            isTyping = false;
-            // Re-avalia o estado do botão
-            messageInput.dispatchEvent(new Event('input'));
-            messageInput.focus();
+            this.isTyping = false;
+            this.sendButton.disabled = false;
+            this.messageInput.focus();
         }
     }
 
-    /**
-     * Envia dados para o webhook DINÂMICO
-     * @param {string} message - A mensagem do usuário
-     */
-    async function sendToWebhook(message) {
-        if (!currentPersona || !currentPersona.webhookPath) {
-            throw new Error("Persona atual ou webhookPath não definido.");
-        }
-
-        // Monta a URL correta com base na persona selecionada
-        const fullWebhookUrl = webhookBaseUrl + currentPersona.webhookPath;
-        
+    async sendToWebhook(message) {
         try {
-            // Usa a URL dinâmica que acabamos de montar
-            const response = await fetch(fullWebhookUrl, { 
+            const response = await fetch(this.webhookUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
-                    question: message,
-                    persona: currentPersona.name,
-                    sessionId: currentSessionId // NOVO: Adicionar o ID da sessão ao corpo da requisição
+                    question: message
                 })
             });
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
+            const data = await response.json();
+            return data;
         } catch (error) {
-            console.error(`Erro na requisição para ${fullWebhookUrl}:`, error);
+            console.error('Erro na requisição para webhook:', error);
             throw error;
         }
     }
 
-    // --- FUNÇÕES AUXILIARES DE UI ---
-    
-    function addUserMessage(message) {
-        const el = createMessageElement(message, 'user');
-        chatMessages.appendChild(el);
-        scrollToBottom();
+    addUserMessage(message) {
+        const messageElement = this.createMessageElement(message, 'user');
+        this.chatMessages.appendChild(messageElement);
+        this.scrollToBottom();
     }
 
-    async function addBotMessage(message) {
-        const el = createMessageElement(message, 'bot');
-        chatMessages.appendChild(el);
-        scrollToBottom();
+    async addBotMessage(message) {
+        const messageElement = this.createMessageElement('', 'bot');
+        const messageContent = messageElement.querySelector('.message-content');
+        
+        // Inserir imediatamente o texto (sem digitar caractere por caractere)
+        messageContent.textContent = message;
+
+        this.chatMessages.appendChild(messageElement);
+        this.scrollToBottom();
     }
 
-    function createMessageElement(message, type) {
+    createMessageElement(message, type) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        // Para renderizar quebras de linha como \n
-        contentDiv.innerText = message;
+        contentDiv.textContent = message;
 
         const timeDiv = document.createElement('div');
         timeDiv.className = 'message-time';
-        timeDiv.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        timeDiv.textContent = this.getCurrentTime();
 
         messageDiv.appendChild(contentDiv);
-        contentDiv.appendChild(timeDiv); // Colocando o tempo dentro do balão para melhor alinhamento
+        messageDiv.appendChild(timeDiv);
 
         return messageDiv;
     }
 
-    function showTypingIndicator() {
-        typingIndicator.style.display = 'flex';
-        scrollToBottom();
+    showTypingIndicator() {
+        this.typingIndicator.style.display = 'flex';
+        this.scrollToBottom();
     }
 
-    function hideTypingIndicator() {
-        typingIndicator.style.display = 'none';
+    hideTypingIndicator() {
+        this.typingIndicator.style.display = 'none';
     }
 
-    function scrollToBottom() {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    scrollToBottom() {
+        requestAnimationFrame(() => {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        });
     }
 
-    // --- EVENT LISTENERS ---
-    
-    sendButton.addEventListener('click', sendMessage);
-    
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
+    getCurrentTime() {
+        const now = new Date();
+        return now.toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
 
-    messageInput.addEventListener('input', () => {
-        sendButton.disabled = messageInput.value.trim().length === 0 || isTyping;
-    });
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
 
-    // --- INICIALIZAÇÃO ---
-    initHub();
-});
+// Inicializar o chatbot quando a página carregar
+document.addEventListener('DOMContentLoaded', () => {
+    new ChatBot();
+}); 
