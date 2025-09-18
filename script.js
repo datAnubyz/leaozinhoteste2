@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ESTADO DA APLICAÇÃO ---
     let isTyping = false;
     let currentPersona = null;
+    let currentSessionId = null; // NOVO: Variável para armazenar o ID da sessão atual
     const webhookBaseUrl = 'https://n8n.srv871883.hstgr.cloud/webhook-test/';
 
     // --- FUNÇÕES PRINCIPAIS ---
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatContainer.style.display = 'none';
         personaHub.style.display = 'block';
         currentPersona = null;
+        currentSessionId = null; // Limpa o ID da sessão ao voltar para o hub
     }
 
     /**
@@ -103,6 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function startChat(personaKey) {
         currentPersona = personas[personaKey];
         if (!currentPersona) return;
+
+        // NOVO: Gerar um ID de sessão único para esta conversa
+        currentSessionId = crypto.randomUUID();
+        console.log(`Nova sessão iniciada com ID: ${currentSessionId}`);
 
         // Limpa mensagens antigas
         chatMessages.innerHTML = '';
@@ -174,8 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Monta a URL correta com base na persona selecionada
         const fullWebhookUrl = webhookBaseUrl + currentPersona.webhookPath;
-        console.log(`Enviando para: ${fullWebhookUrl}`); // Log para debug
-
+        
         try {
             // Usa a URL dinâmica que acabamos de montar
             const response = await fetch(fullWebhookUrl, { 
@@ -183,7 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     question: message,
-                    persona: currentPersona.name 
+                    persona: currentPersona.name,
+                    sessionId: currentSessionId // NOVO: Adicionar o ID da sessão ao corpo da requisição
                 })
             });
 
