@@ -10,32 +10,65 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="chat-container">
-        <!-- Header do Chat -->
+
+    <div id="persona-hub">
+        <h1 class="hub-title">Escolha seu Especialista</h1>
+        <div class="persona-grid">
+            <div class="persona-card" data-persona="gestor">
+                <div class="persona-icon gestor">📈</div>
+                <div class="persona-info">
+                    <h3>Leão Gestor</h3>
+                    <p>Performance e Estratégia</p>
+                </div>
+            </div>
+            <div class="persona-card" data-persona="social">
+                <div class="persona-icon social">📱</div>
+                <div class="persona-info">
+                    <h3>Leão Social</h3>
+                    <p>Engajamento e Criatividade</p>
+                </div>
+            </div>
+            <div class="persona-card" data-persona="torcedor">
+                <div class="persona-icon torcedor">⚽</div>
+                <div class="persona-info">
+                    <h3>Leão Torcedor</h3>
+                    <p>Apostas Esportivas</p>
+                </div>
+            </div>
+            <div class="persona-card" data-persona="croupier">
+                <div class="persona-icon croupier">🃏</div>
+                <div class="persona-info">
+                    <h3>Leão Croupier</h3>
+                    <p>Mestre do Cassino</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer" style="display: none;">
         <div class="chat-header">
-            <div class="bot-avatar">🦁</div>
+            <button id="backButton" title="Voltar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.41 7.41L14 6L8 12L14 18L15.41 16.59L10.83 12L15.41 7.41Z" fill="currentColor"/></svg>
+            </button>
+            <div class="bot-avatar" id="botAvatar">🦁</div>
             <div class="bot-info">
-                <h3>Leãozinho</h3>
+                <h3 id="botName">Leãozinho</h3>
                 <span class="status">Online</span>
             </div>
         </div>
 
-        <!-- Área de Mensagens -->
         <div class="chat-messages" id="chatMessages">
-            <!-- Mensagens serão adicionadas aqui dinamicamente -->
-        </div>
+            </div>
 
-        <!-- Indicador de Digitação -->
         <div class="typing-indicator" id="typingIndicator" style="display: none;">
             <div class="typing-dots">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            <span class="typing-text">Leãozinho está digitando...</span>
+            <span class="typing-text" id="typingText">Leãozinho está digitando...</span>
         </div>
 
-        <!-- Input de Mensagem -->
         <div class="chat-input">
             <div class="input-container">
                 <input 
@@ -56,4 +89,4 @@
 
     <script src="script.js"></script>
 </body>
-</html> 
+</html>
