@@ -175,6 +175,45 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
+/* ⬇️ Estilos de Markdown dentro da mensagem do bot */
+.message.bot .message-content h1,
+.message.bot .message-content h2,
+.message.bot .message-content h3 {
+    color: #c5a868;
+    margin: 8px 0;
+    font-weight: 600;
+}
+
+.message.bot .message-content ul {
+    margin: 8px 0 8px 20px;
+    padding-left: 15px;
+}
+
+.message.bot .message-content ul li {
+    margin-bottom: 6px;
+    list-style: disc;
+}
+
+.message.bot .message-content ol {
+    margin: 8px 0 8px 20px;
+    padding-left: 15px;
+}
+
+.message.bot .message-content ol li {
+    margin-bottom: 6px;
+    list-style: decimal;
+}
+
+.message.bot .message-content a {
+    color: #c5a868;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.message.bot .message-content a:hover {
+    color: #e0c278;
+}
+
 .message-time {
     font-size: 11px;
     opacity: 0.6;
@@ -407,4 +446,4 @@ body {
 @keyframes shine {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
-} 
+}
