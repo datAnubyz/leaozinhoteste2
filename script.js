@@ -8,6 +8,9 @@ class ChatBot {
         this.webhookUrl = 'https://n8n.srv871883.hstgr.cloud/webhook-test/leaozinho';
         this.isTyping = false;
         
+        // --- Adicionado para o sessionID ---
+        this.sessionID = this.getSessionID();
+        
         this.init();
     }
 
@@ -39,6 +42,17 @@ class ChatBot {
         setTimeout(() => {
             this.addBotMessage("🦁 VIVA A MAGIA DE VEGAS! 🎰\n\nOlá! Sou o LEÃOZINHO, seu assistente virtual de elite! ✨\n\nEstou aqui para transformar sua experiência em algo EXTRAORDINÁRIO! Como posso te ajudar hoje? 🌟");
         }, 500);
+    }
+
+    // --- Nova função para gerenciar o sessionID ---
+    getSessionID() {
+        let sessionID = sessionStorage.getItem('chatbotSessionID');
+        if (!sessionID) {
+            // Cria um ID único simples baseado no tempo e um número aleatório
+            sessionID = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            sessionStorage.setItem('chatbotSessionID', sessionID);
+        }
+        return sessionID;
     }
 
     async sendMessage() {
@@ -88,8 +102,10 @@ class ChatBot {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                // --- Modificado para incluir o sessionID ---
                 body: JSON.stringify({
-                    question: message
+                    question: message,
+                    sessionID: this.sessionID // Enviando o ID da sessão
                 })
             });
 
@@ -97,26 +113,16 @@ class ChatBot {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // --- INÍCIO DA LÓGICA ADAPTADA ---
-
-            // Pega o "rótulo" do tipo de conteúdo da resposta
             const contentType = response.headers.get('Content-Type');
 
-            // SE a resposta vier com o rótulo de JSON...
             if (contentType && contentType.includes('application/json')) {
-                // ...processa como um objeto JSON.
                 const data = await response.json();
-                return data; // O código principal espera que este objeto tenha a chave "reply"
+                return data;
 
-            // SENÃO, para qualquer outro tipo (texto puro, markdown, etc.)...
             } else {
-                // ...processa como texto puro.
                 const textData = await response.text();
-                // E então, encapsulamos o texto no formato que o resto do código espera,
-                // para não quebrar a lógica existente.
                 return { reply: textData };
             }
-            // --- FIM DA LÓGICA ADAPTADA ---
 
         } catch (error) {
             console.error('Erro na requisição para webhook:', error);
