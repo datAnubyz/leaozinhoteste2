@@ -8,24 +8,12 @@ class ChatBot {
         this.webhookUrl = 'https://n8n.srv871883.hstgr.cloud/webhook-test/leaozinho';
         this.isTyping = false;
         
-        // Passo 1: Inicializar a propriedade do ID da sessão
-        this.sessionId = null;
-        
         this.init();
     }
 
     init() {
-        // Passo 2: Gerar o ID único assim que o chat for inicializado
-        this.generateSessionId();
-        
         this.setupEventListeners();
         this.displayWelcomeMessage();
-    }
-
-    // Nova função para gerar e armazenar o ID da sessão
-    generateSessionId() {
-        this.sessionId = crypto.randomUUID();
-        console.log('Chat session started with ID:', this.sessionId); // Ótimo para depuração
     }
 
     setupEventListeners() {
@@ -76,7 +64,7 @@ class ChatBot {
             // Esconder indicador de digitação
             this.hideTypingIndicator();
             
-            // Adicionar resposta do bot (instantâneo; animação sutil via CSS)
+            // Adicionar resposta do bot
             if (response && response.reply) {
                 await this.addBotMessage(response.reply);
             } else {
@@ -100,10 +88,8 @@ class ChatBot {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                // Passo 3: Adicionar o sessionId ao corpo da requisição
                 body: JSON.stringify({
-                    question: message,
-                    sessionId: this.sessionId 
+                    question: message
                 })
             });
 
@@ -129,8 +115,9 @@ class ChatBot {
         const messageElement = this.createMessageElement('', 'bot');
         const messageContent = messageElement.querySelector('.message-content');
         
-        // Inserir imediatamente o texto (sem digitar caractere por caractere)
-        messageContent.textContent = message;
+        // Converter markdown → HTML e sanitizar
+        const html = DOMPurify.sanitize(marked.parse(message));
+        messageContent.innerHTML = html;
 
         this.chatMessages.appendChild(messageElement);
         this.scrollToBottom();
@@ -142,7 +129,7 @@ class ChatBot {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.textContent = message;
+        contentDiv.textContent = message; // usado apenas para user; bot sobrescreve
 
         const timeDiv = document.createElement('div');
         timeDiv.className = 'message-time';
