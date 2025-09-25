@@ -97,8 +97,27 @@ class ChatBot {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.json();
-            return data;
+            // --- INÍCIO DA LÓGICA ADAPTADA ---
+
+            // Pega o "rótulo" do tipo de conteúdo da resposta
+            const contentType = response.headers.get('Content-Type');
+
+            // SE a resposta vier com o rótulo de JSON...
+            if (contentType && contentType.includes('application/json')) {
+                // ...processa como um objeto JSON.
+                const data = await response.json();
+                return data; // O código principal espera que este objeto tenha a chave "reply"
+
+            // SENÃO, para qualquer outro tipo (texto puro, markdown, etc.)...
+            } else {
+                // ...processa como texto puro.
+                const textData = await response.text();
+                // E então, encapsulamos o texto no formato que o resto do código espera,
+                // para não quebrar a lógica existente.
+                return { reply: textData };
+            }
+            // --- FIM DA LÓGICA ADAPTADA ---
+
         } catch (error) {
             console.error('Erro na requisição para webhook:', error);
             throw error;
@@ -116,6 +135,7 @@ class ChatBot {
         const messageContent = messageElement.querySelector('.message-content');
         
         // Converter markdown → HTML e sanitizar
+        // Certifique-se de que as bibliotecas 'marked' e 'DOMPurify' estão importadas no seu HTML
         const html = DOMPurify.sanitize(marked.parse(message));
         messageContent.innerHTML = html;
 
